@@ -3,6 +3,7 @@ import { headers } from "next/headers"
 import { createClient } from "@/lib/supabase"
 import { stripe } from "@/lib/stripe"
 
+// Handler for POST requests
 export async function POST(req: Request) {
   const body = await req.text()
   const signature = headers().get("stripe-signature")
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
             stripe_price_id: subscription.items.data[0].price.id,
             status: subscription.status,
             current_period_end: new Date(subscription.current_period_end * 1000),
-          }as any)
+          } as any)
 
         break
 
@@ -68,8 +69,5 @@ export async function POST(req: Request) {
   }
 }
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
+// New Next.js 13.x API route config
+export const runtime = 'edge' // To make it run on the edge, if required

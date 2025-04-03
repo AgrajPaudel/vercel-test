@@ -13,10 +13,16 @@ import { TrainingStatus } from "@/types/supabase"
 export default function GeneratePage() {
   const [prompt, setPrompt] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
-  const [trainingStatus, setTrainingStatus] = useState<TrainingStatus>('not_started')
+  const [trainingStatus, setTrainingStatus] = useState<TrainingStatus>('completed')
   const { toast } = useToast()
   const router = useRouter()
   const supabase = createClient()
+
+  interface Payload {
+    new?: {
+      status?: string; // The status property can be a string, or it might be undefined
+    };
+  }
 
   useEffect(() => {
     const checkTrainingStatus = async () => {
@@ -31,7 +37,7 @@ export default function GeneratePage() {
 
       if (model) {
         setTrainingStatus(model.status as TrainingStatus)
-        if (model.status === 'training_in_progress') {
+        if (model.status === 'processing') {
           router.push('/dashboard')
         }
       }
@@ -48,11 +54,11 @@ export default function GeneratePage() {
           schema: 'public',
           table: 'user_models',
         },
-        (payload) => {
-          if (payload.new && payload.new.status) {
-            setTrainingStatus(payload.new.status as TrainingStatus)
-            if (payload.new.status === 'training_in_progress') {
-              router.push('/dashboard')
+        (payload: Payload) => {
+          if (payload.new?.status) {
+            setTrainingStatus(payload.new.status as TrainingStatus);
+            if (payload.new.status === 'processing') {
+              router.push('/dashboard');
             }
           }
         }
@@ -74,7 +80,7 @@ export default function GeneratePage() {
       return
     }
 
-    if (trainingStatus !== 'ready_for_generation') {
+    if (trainingStatus == 'processing') {
       toast({
         title: "Model not ready",
         description: "Please wait for model training to complete",
@@ -101,7 +107,7 @@ export default function GeneratePage() {
     }
   }
 
-  if (trainingStatus === 'training_in_progress') {
+  if (trainingStatus === 'processing') {
     router.push('/dashboard')
     return null
   }
@@ -129,7 +135,7 @@ export default function GeneratePage() {
               />
               <Button 
                 onClick={handleGenerate} 
-                disabled={isGenerating || trainingStatus !== 'ready_for_generation'}
+                disabled={isGenerating || trainingStatus !== 'completed'}
               >
                 <Wand2 className="mr-2 h-4 w-4" />
                 Generate
